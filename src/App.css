@@ -1,0 +1,256 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #faf7f4;
+  color: #1a1a2e;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  height: 52px;
+  background: #fff;
+  border-bottom: 1px solid #e8e3de;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  background: #7c3aed;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.logo svg { width: 18px; height: 18px; fill: #fff; }
+
+.topbar-title { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+
+.topbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid #e0dbd5;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.topbar-btn:hover { background: #f5f0eb; }
+.topbar-btn svg { width: 14px; height: 14px; }
+
+.topbar-spacer { flex: 1; }
+
+/* Device switcher */
+.device-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f5f0eb;
+  border-radius: 8px;
+  padding: 3px;
+}
+.device-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: #888;
+  cursor: pointer;
+}
+.device-btn svg { width: 14px; height: 14px; }
+.device-btn.active { background: #7c3aed; color: #fff; }
+
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+
+.btn-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-preview:hover { background: #0284c7; }
+.btn-preview svg { width: 14px; height: 14px; }
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0dbd5;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  color: #555;
+}
+.icon-btn:hover { background: #f5f0eb; }
+.icon-btn svg { width: 15px; height: 15px; }
+
+/* ── BODY ── */
+.body-wrap { display: flex; flex: 1; overflow: hidden; }
+
+/* ── ICON RAIL ── */
+.icon-rail {
+  width: 48px;
+  background: #fff;
+  border-right: 1px solid #e8e3de;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.rail-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+}
+.rail-btn:hover { background: #f0ebf8; color: #7c3aed; }
+.rail-btn svg { width: 18px; height: 18px; }
+.rail-spacer { flex: 1; }
+.rail-btn.plus { background: #7c3aed; color: #fff; }
+.rail-btn.plus:hover { background: #6d28d9; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid #e8e3de;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+.sidebar-header span { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+.sidebar-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  display: flex;
+  align-items: center;
+}
+.sidebar-header button svg { width: 16px; height: 16px; }
+
+.template-row { display: flex; align-items: center; gap: 8px; padding: 6px 16px 10px; }
+.template-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e0dbd5;
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #444;
+  background: #faf7f4;
+}
+.template-input svg { width: 13px; height: 13px; color: #999; flex-shrink: 0; }
+.template-input span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.template-icon-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0dbd5;
+  border-radius: 6px;
+  background: #faf7f4;
+  cursor: pointer;
+  color: #888;
+  flex-shrink: 0;
+}
+.template-icon-btn svg { width: 13px; height: 13px; }
+
+/* Accordion */
+.accordion-item { border-top: 1px solid #f0ebe6; }
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+.accordion-header:hover { background: #faf7f4; }
+.accordion-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333;
+}
+.accordion-left svg { width: 14px; height: 14px; color: #888; }
+.badge {
+  font-size: 11px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 1px solid #c4b5fd;
+  color: #7c3aed;
+  background: #f5f0ff;
+  font-weight: 500;
+}
+.chevron { color: #aaa; transition: transform 0.2s; display: flex; }
+.chevron.open { transform: rotate(180deg); }
+.chevron svg { width: 14px; height: 14px; }
+.accordion-body { padding: 8px 16px 12px; font-size: 12px; color: #888; }
+
+/* ── CANVAS ── */
+.canvas { flex: 1; background: #faf7f4; overflow: auto; padding: 24px; }
+.canvas-inner { margin: 0 auto; transition: max-width 0.3s; }
+
+.grid-wrapper {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 8px;
+}
+.grid-cell {
+  background: #fff;
+  border: 1px solid #e5dfd9;
+  border-radius: 6px;
+  min-height: 160px;
+}

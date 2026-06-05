@@ -1,22 +1,16 @@
-# Custom Dashboard UI
+# React + Vite
 
-HTML/CSS replica of a custom dashboard builder interface.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- Top navigation bar with device switcher (Smartphone / Tablet / Desktop)
-- Collapsible left sidebar with accordion sections
-- Icon rail for quick navigation
-- 12-column grid canvas with gap spacing
-- Zero dependencies — single `index.html` file
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Usage
+## React Compiler
 
-Open `index.html` directly in a browser, or deploy via GitHub Pages.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## GitHub Pages
+## Expanding the ESLint configuration
 
-1. Push to GitHub
-2. Go to **Settings → Pages**
-3. Set source to `main` branch, `/ (root)`
-4. Your dashboard will be live at `https://<username>.github.io/<repo-name>/`
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
