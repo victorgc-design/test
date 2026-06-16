@@ -12,8 +12,14 @@ export default function App() {
   const [kpiSelectedIds, setKpiSelectedIds] = useState([])
   const [showGrid, setShowGrid]         = useState(true)
   const [groupBySection, setGroupBySection] = useState(true)
-  const [editingKpiId, setEditingKpiId]           = useState(null)
+  const [editingKpiId, setEditingKpiId]             = useState(null)
   const [groupReorderSignal, setGroupReorderSignal] = useState(null)
+  const [canvasOrder, setCanvasOrder]               = useState(null)
+  const [previewMode, setPreviewMode]               = useState(false)
+  const [kpiVizTypes, setKpiVizTypes]               = useState({})
+
+  const handleVizTypeChange = (kpiId, type) =>
+    setKpiVizTypes(prev => ({ ...prev, [kpiId]: type }))
 
   return (
     <div className="app">
@@ -24,6 +30,8 @@ export default function App() {
           onDeviceChange={setDevice}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid(v => !v)}
+          previewMode={previewMode}
+          onTogglePreview={() => setPreviewMode(v => !v)}
         />
         <div className="body-wrap">
           {sidebarOpen && (
@@ -31,9 +39,15 @@ export default function App() {
               onKpisChange={setKpiSelectedIds}
               onGroupBySectionChange={setGroupBySection}
               editingKpiId={editingKpiId}
+              canvasOrder={canvasOrder}
               onGroupReorder={(groupId, kpiIds) =>
-                setGroupReorderSignal({ groupId, kpiIds, ts: Date.now() })
+                setGroupReorderSignal({ type: 'cards', groupId, kpiIds, ts: Date.now() })
               }
+              onGroupsReorder={(groupIds) =>
+                setGroupReorderSignal({ type: 'groups', groupIds, ts: Date.now() })
+              }
+              kpiVizTypes={kpiVizTypes}
+              onVizTypeChange={handleVizTypeChange}
             />
           )}
           <button
@@ -50,6 +64,9 @@ export default function App() {
             groupBySection={groupBySection}
             onCardSelect={setEditingKpiId}
             groupReorderSignal={groupReorderSignal}
+            onCardsOrderChange={o => setCanvasOrder({ ...o, ts: Date.now() })}
+            previewMode={previewMode}
+            kpiVizTypes={kpiVizTypes}
           />
         </div>
       </div>

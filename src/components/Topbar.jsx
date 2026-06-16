@@ -1,4 +1,4 @@
-import { TextSelect, Smartphone, Tablet, Monitor, SquarePlay, CircleGauge, Share2, Download, BookMarked, Building2, LayoutGrid } from 'lucide-react'
+import { TextSelect, Smartphone, Tablet, Monitor, SquarePlay, X, CircleGauge, Share2, Download, BookMarked, Building2, LayoutGrid } from 'lucide-react'
 
 const devices = [
   { name: 'Smartphone', icon: Smartphone },
@@ -6,7 +6,7 @@ const devices = [
   { name: 'Desktop',    icon: Monitor },
 ]
 
-export default function Topbar({ device, onDeviceChange, showGrid, onToggleGrid }) {
+export default function Topbar({ device, onDeviceChange, showGrid, onToggleGrid, previewMode, onTogglePreview }) {
   return (
     <header className="topbar">
       <span className="topbar-title">Custom Dashboard</span>
@@ -34,9 +34,12 @@ export default function Topbar({ device, onDeviceChange, showGrid, onToggleGrid 
       <div className="topbar-spacer" />
 
       <div className="topbar-actions">
-        <button className="btn-preview">
-          <SquarePlay size={14} />
-          Preview
+        <button
+          className={`btn-preview${previewMode ? ' active' : ''}`}
+          onClick={onTogglePreview}
+        >
+          {previewMode ? <X size={14} /> : <SquarePlay size={14} />}
+          {previewMode ? 'Exit Preview' : 'Preview'}
         </button>
         <button className="icon-btn" title="Gauge">
           <CircleGauge size={15} />

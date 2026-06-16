@@ -344,11 +344,97 @@ function DataSetCard({ dataset, onEdit, onChange }) {
   )
 }
 
+// ── VIZ TYPE GALLERY ─────────────────────────────────────────────────────────
+
+const VIZ_TYPES = [
+  {
+    id: 'kpi', label: 'KPI',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="6" width="22" height="7" rx="2" fill="#ede9e1"/>
+        <rect x="4" y="17" width="52" height="13" rx="3" fill="#ddd8cf"/>
+        <rect x="4" y="35" width="30" height="7" rx="3.5" fill="#ede9e1"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'bar', label: 'Bar',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {[{y:7,w:52},{y:18,w:38},{y:29,w:62},{y:40,w:30}].map(({y,w},i) => (
+          <g key={i}>
+            <rect x="4" y={y} width="14" height="7" rx="2" fill="#e8e4dc"/>
+            <rect x="22" y={y} width={w} height="7" rx="2" fill="#ddd8cf"/>
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+  {
+    id: 'line', label: 'Line',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4,44 C14,36 22,18 30,23 S44,10 54,15 S66,4 76,8" stroke="#ddd8cf" strokeWidth="2.5" strokeLinecap="round"/>
+        <path d="M4,44 C14,36 22,18 30,23 S44,10 54,15 S66,4 76,8 L76,50 L4,50 Z" fill="#f0ece5"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'donut', label: 'Donut',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="28" cy="28" r="19" stroke="#ede9e1" strokeWidth="9"/>
+        <circle cx="28" cy="28" r="19" stroke="#c9c4bb" strokeWidth="9" strokeDasharray="34 90" strokeLinecap="round"/>
+        <rect x="56" y="16" width="18" height="5" rx="2" fill="#ede9e1"/>
+        <rect x="56" y="26" width="14" height="5" rx="2" fill="#ede9e1"/>
+        <rect x="56" y="36" width="16" height="5" rx="2" fill="#ede9e1"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'table', label: 'Table',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="72" height="8" rx="2" fill="#d5d0c7"/>
+        {[17,28,39].map((y,i) => (
+          <g key={i}>
+            <rect x="4"  y={y} width="28" height="6" rx="1.5" fill="#ede9e1" opacity={1-i*0.1}/>
+            <rect x="36" y={y} width="18" height="6" rx="1.5" fill="#ede9e1" opacity={1-i*0.1}/>
+            <rect x="58" y={y} width="18" height="6" rx="1.5" fill="#ede9e1" opacity={1-i*0.1}/>
+          </g>
+        ))}
+      </svg>
+    ),
+  },
+]
+
+function VizTypeGallery({ current, onSelect }) {
+  return (
+    <div className="vtz-gallery">
+      {VIZ_TYPES.map(({ id, label, Thumb }) => (
+        <button
+          key={id}
+          className={`vtz-thumb${current === id ? ' active' : ''}`}
+          onClick={() => onSelect(id)}
+          title={label}
+        >
+          <div className="vtz-preview"><Thumb /></div>
+          <span className="vtz-label">{label}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── KPI WIDGET CARD ───────────────────────────────────────────────────────────
 
-function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandleProps = {}, isDraggingCard = false, dragStyle = {} }) {
+function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandleProps = {}, isDraggingCard = false, dragStyle = {}, vizType = 'kpi', onVizTypeChange, externalExpanded = false }) {
   const [expanded, setExpanded] = useState(false)
   const [subOpen, setSubOpen]   = useState({ format: true, info: false, sizing: false })
+
+  useEffect(() => {
+    if (externalExpanded) setExpanded(true)
+  }, [externalExpanded])
   const [kpiSize, setKpiSize]   = useState('S')
 
   const togSub = (k) => setSubOpen(p => ({ ...p, [k]: !p[k] }))
@@ -389,17 +475,10 @@ function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandlePro
               <div className="kpi-sub-body">
                 <div className="kpi-sub-field">
                   <span className="kpi-sub-field-label">Display Mode</span>
-                  <div className="granularity-tabs tertiary">
-                    {['Numbers','Visuals','Combined'].map(m => (
-                      <button
-                        key={m}
-                        className={`gran-tab${config.displayMode === m.toLowerCase() ? ' active' : ''}`}
-                        onClick={() => set('displayMode')(m.toLowerCase())}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
+                  <VizTypeGallery
+                    current={vizType}
+                    onSelect={type => onVizTypeChange?.(kpi.id, type)}
+                  />
                 </div>
                 <div className="kpi-sub-field">
                   <span className="kpi-sub-field-label">Detail View</span>
@@ -616,9 +695,12 @@ function DataKpisContent({ selectedIds, onToggle, editingId }) {
   )
 }
 
-// ── Wrapper sortable para KpiWidgetCard ───────────────────────────────────────
-function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: kpi.id })
+// ── Wrapper sortable para KpiWidgetCard (con tipo 'kpi' en data) ──────────────
+function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset, groupId, vizType, onVizTypeChange, externalExpanded }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: kpi.id,
+    data: { type: 'kpi', groupId },
+  })
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform), transition }}>
       <KpiWidgetCard
@@ -629,7 +711,47 @@ function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset }) {
         onReset={onReset}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDraggingCard={isDragging}
+        vizType={vizType}
+        onVizTypeChange={onVizTypeChange}
+        externalExpanded={externalExpanded}
       />
+    </div>
+  )
+}
+
+// ── Grupo sortable con grip de grupo ─────────────────────────────────────────
+function SortableGroupCard({ group, open, onToggle, kpiCount, children }) {
+  const {
+    attributes, listeners,
+    setNodeRef, setActivatorNodeRef,
+    transform, transition, isDragging,
+  } = useSortable({ id: group.id, data: { type: 'group', groupId: group.id } })
+  const GIcon = group.icon
+  return (
+    <div
+      ref={setNodeRef}
+      className={`viz-group-card${isDragging ? ' dragging' : ''}`}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+    >
+      <div className="kpi-group-header" onClick={onToggle}>
+        <div
+          ref={setActivatorNodeRef}
+          className="kpi-group-grip"
+          {...attributes}
+          {...listeners}
+          onClick={e => e.stopPropagation()}
+        >
+          <GripVertical size={13} style={{ color: '#c4c9e0', cursor: 'grab' }} />
+        </div>
+        <GIcon size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
+        <span className="kpi-group-label">{group.label}</span>
+        <span className="kpi-group-count">{kpiCount} / {group.items.length}</span>
+        {open
+          ? <ChevronUp   size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
+          : <ChevronDown size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
+        }
+      </div>
+      {children}
     </div>
   )
 }
@@ -638,24 +760,31 @@ function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset }) {
 
 const SIZE_OPTIONS = ['S', 'M', 'L', 'XL']
 
-function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, onReset, groupBySection, onGroupBySectionToggle, onReorderGroup }) {
-  const [groupExpanded, setGroupExpanded] = useState({})
-  const [groupOrders, setGroupOrders]     = useState({})
+function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, onReset, groupBySection, onGroupBySectionToggle, onReorderGroup, onGroupsReorder, canvasOrder, editingKpiId, kpiVizTypes, onVizTypeChange }) {
+  const [groupExpanded, setGroupExpanded]         = useState({})
+  const [groupOrders, setGroupOrders]             = useState({})
+  const [groupDisplayOrder, setGroupDisplayOrder] = useState([])
+
+  const [expandedKpiId, setExpandedKpiId] = useState(null)
+
+  useEffect(() => {
+    if (editingKpiId) setExpandedKpiId(editingKpiId)
+  }, [editingKpiId])
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
   const activeGroups = KPI_GROUPS.filter(g =>
     g.items.some(item => selectedIds.includes(item.id))
   )
+  const activeGroupIds = activeGroups.map(g => g.id).join(',')
 
-  // Sincroniza el orden local cuando cambian los selectedIds
+  // Sincroniza el orden local de KPIs cuando cambian los selectedIds
   useEffect(() => {
     setGroupOrders(prev => {
       const next = {}
       activeGroups.forEach(g => {
         const groupKpis = g.items.filter(k => selectedIds.includes(k.id)).map(k => k.id)
         const prev_g    = prev[g.id] ?? []
-        // Mantener el orden existente, añadir nuevos al final, eliminar deseleccionados
         const kept   = prev_g.filter(id => groupKpis.includes(id))
         const added  = groupKpis.filter(id => !kept.includes(id))
         next[g.id] = [...kept, ...added]
@@ -663,6 +792,42 @@ function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, on
       return next
     })
   }, [selectedIds])  // eslint-disable-line
+
+  // Sincroniza el orden de grupos cuando se añaden/eliminan grupos
+  useEffect(() => {
+    const ids = activeGroupIds ? activeGroupIds.split(',') : []
+    setGroupDisplayOrder(prev => {
+      const kept  = prev.filter(id => ids.includes(id))
+      const added = ids.filter(id => !kept.includes(id))
+      return [...kept, ...added]
+    })
+  }, [activeGroupIds])
+
+  // Sincroniza desde el canvas cuando el usuario arrastra allí (sin llamar onGroupsReorder de vuelta)
+  useEffect(() => {
+    if (!canvasOrder) return
+    const { groupIds, cardOrders } = canvasOrder
+    if (groupIds?.length) {
+      setGroupDisplayOrder(prev => {
+        const active = activeGroupIds ? activeGroupIds.split(',') : []
+        const ordered = groupIds.filter(id => active.includes(id))
+        const extra   = active.filter(id => !ordered.includes(id))
+        return [...ordered, ...extra]
+      })
+    }
+    if (cardOrders) {
+      setGroupOrders(prev => {
+        const next = { ...prev }
+        Object.entries(cardOrders).forEach(([gId, kpiIds]) => {
+          if (!next[gId]) return
+          const reordered = kpiIds.filter(id => next[gId].includes(id))
+          const extra     = next[gId].filter(id => !reordered.includes(id))
+          next[gId] = [...reordered, ...extra]
+        })
+        return next
+      })
+    }
+  }, [canvasOrder])  // eslint-disable-line
 
   if (selectedIds.length === 0) {
     return (
@@ -672,8 +837,42 @@ function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, on
     )
   }
 
-  const togGroup = (id) => setGroupExpanded(p => ({ ...p, [id]: p[id] === false }))
+  const togGroup    = (id) => setGroupExpanded(p => ({ ...p, [id]: p[id] === false }))
   const isGroupOpen = (id) => groupExpanded[id] !== false
+
+  const orderedGroups = groupDisplayOrder
+    .map(id => activeGroups.find(g => g.id === id))
+    .filter(Boolean)
+
+  const handleDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return
+    const activeType = active.data.current?.type
+
+    if (activeType === 'group') {
+      // Reordenar grupos
+      const targetId = over.data.current?.type === 'group'
+        ? over.id
+        : over.data.current?.groupId  // over es un KPI → usar su grupo como destino
+      if (!targetId) return
+      const oldIdx = groupDisplayOrder.indexOf(active.id)
+      const newIdx = groupDisplayOrder.indexOf(targetId)
+      if (oldIdx === -1 || newIdx === -1) return
+      const newOrder = arrayMove(groupDisplayOrder, oldIdx, newIdx)
+      setGroupDisplayOrder(newOrder)
+      onGroupsReorder?.(newOrder)
+    } else {
+      // Reordenar KPIs dentro del grupo
+      const groupId = active.data.current?.groupId
+      if (!groupId) return
+      const order  = groupOrders[groupId] ?? []
+      const oldIdx = order.indexOf(active.id)
+      const newIdx = order.indexOf(over.id)
+      if (oldIdx === -1 || newIdx === -1) return
+      const newOrder = arrayMove(order, oldIdx, newIdx)
+      setGroupOrders(prev => ({ ...prev, [groupId]: newOrder }))
+      onReorderGroup?.(groupId, newOrder)
+    }
+  }
 
   return (
     <div className="viz-kpi-settings">
@@ -688,64 +887,54 @@ function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, on
         <span className="viz-group-by-label">Widgets grouped by Section</span>
       </label>
 
-      {/* KPI groups */}
-      {activeGroups.map(group => {
-        const GIcon      = group.icon
-        const order      = groupOrders[group.id] ?? []
-        const orderedKpis = order.map(id => group.items.find(k => k.id === id)).filter(Boolean)
-        const open        = isGroupOpen(group.id)
+      {/* Un único DndContext maneja tanto drag de grupos como drag de KPIs */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={groupDisplayOrder} strategy={verticalListSortingStrategy}>
+          {orderedGroups.map(group => {
+            const order       = groupOrders[group.id] ?? []
+            const orderedKpis = order.map(id => group.items.find(k => k.id === id)).filter(Boolean)
+            const open        = isGroupOpen(group.id)
 
-        return (
-          <div key={group.id} className="viz-group-card">
-            <div className="kpi-group-header" onClick={() => togGroup(group.id)}>
-              <GIcon size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
-              <span className="kpi-group-label">{group.label}</span>
-              <span className="kpi-group-count">{orderedKpis.length} / {group.items.length}</span>
-              {open
-                ? <ChevronUp   size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
-                : <ChevronDown size={11} style={{ color: '#797fa4', flexShrink: 0 }} />
-              }
-            </div>
-
-            {open && (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={({ active, over }) => {
-                  if (!over || active.id === over.id) return
-                  const oldIdx = order.indexOf(active.id)
-                  const newIdx = order.indexOf(over.id)
-                  const newOrder = arrayMove(order, oldIdx, newIdx)
-                  setGroupOrders(prev => ({ ...prev, [group.id]: newOrder }))
-                  onReorderGroup?.(group.id, newOrder)
-                }}
+            return (
+              <SortableGroupCard
+                key={group.id}
+                group={group}
+                open={open}
+                onToggle={() => togGroup(group.id)}
+                kpiCount={orderedKpis.length}
               >
-                <SortableContext items={order} strategy={verticalListSortingStrategy}>
-                  <div className="viz-group-items">
-                    {orderedKpis.map(kpi => (
-                      <SortableKpiWidgetCard
-                        key={kpi.id}
-                        kpi={kpi}
-                        config={configs[kpi.id] || DEFAULT_WIDGET}
-                        onChange={cfg => onConfigChange(kpi.id, cfg)}
-                        onRemove={() => onRemove(kpi.id)}
-                        onReset={() => onReset(kpi.id)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            )}
-          </div>
-        )
-      })}
+                {open && (
+                  <SortableContext items={order} strategy={verticalListSortingStrategy}>
+                    <div className="viz-group-items">
+                      {orderedKpis.map(kpi => (
+                        <SortableKpiWidgetCard
+                          key={kpi.id}
+                          kpi={kpi}
+                          config={configs[kpi.id] || DEFAULT_WIDGET}
+                          onChange={cfg => onConfigChange(kpi.id, cfg)}
+                          onRemove={() => onRemove(kpi.id)}
+                          onReset={() => onReset(kpi.id)}
+                          groupId={group.id}
+                          vizType={kpiVizTypes?.[kpi.id] ?? 'kpi'}
+                          onVizTypeChange={onVizTypeChange}
+                          externalExpanded={expandedKpiId === kpi.id}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                )}
+              </SortableGroupCard>
+            )
+          })}
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
 
-export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingKpiId, onGroupReorder }) {
+export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingKpiId, onGroupReorder, onGroupsReorder, canvasOrder, kpiVizTypes, onVizTypeChange }) {
   const [open, setOpen]           = useState({})
   const [datasets, setDatasets]   = useState(EXAMPLE_DATASETS)
   const [showForm, setShowForm]   = useState(false)
@@ -756,6 +945,11 @@ export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingK
 
   useEffect(() => { onKpisChange?.(selectedIds) }, [selectedIds])
   useEffect(() => { onGroupBySectionChange?.(groupBySection) }, [groupBySection])
+
+  // Auto-abre el acordeón "viz" cuando se selecciona una card en el canvas
+  useEffect(() => {
+    if (editingKpiId) setOpen(prev => ({ ...prev, viz: true }))
+  }, [editingKpiId])
 
   const toggleAccordion = (id) => setOpen(prev => ({ ...prev, [id]: !prev[id] }))
   const saveDataset     = (data) => { setDatasets(prev => [...prev, { ...data, id: Date.now() }]); setShowForm(false) }
@@ -850,6 +1044,11 @@ export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingK
                   groupBySection={groupBySection}
                   onGroupBySectionToggle={() => setGroupBySection(v => !v)}
                   onReorderGroup={onGroupReorder}
+                  onGroupsReorder={onGroupsReorder}
+                  canvasOrder={canvasOrder}
+                  editingKpiId={editingKpiId}
+                  kpiVizTypes={kpiVizTypes}
+                  onVizTypeChange={onVizTypeChange}
                 />
               )}
             </div>

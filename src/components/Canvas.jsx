@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Info, X, Heading1 } from 'lucide-react'
+import { Info, X, Heading1, GripVertical } from 'lucide-react'
 import {
   DndContext,
   DragOverlay,
@@ -56,7 +56,246 @@ function mockStats(kpiId) {
   }
 }
 
-// ─── Contenido visual de la card ──────────────────────────────────────────────
+// ─── Helpers de mock data deterministicos por índice ─────────────────────────
+function mockHash(seed, i = 0) {
+  let h = 0; const s = seed + i
+  for (let j = 0; j < s.length; j++) h = ((h << 5) - h + s.charCodeAt(j)) & 0xffff
+  return h
+}
+
+// ─── Bar chart horizontal ─────────────────────────────────────────────────────
+function BarChartWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-hbars">
+        {[75, 48, 88, 38, 62].map((w, i) => (
+          <div key={i} className="kw-hbar-row">
+            <div className="kw-hbar-label" />
+            <div className="kw-hbar-track"><div className="kw-hbar-fill" style={{ width: `${w}%` }} /></div>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function BarChartContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const cats = ['18–24', '25–34', '35–44', '45–54', '55+']
+  const bars = cats.map((cat, i) => ({ label: cat, pct: 20 + (mockHash(kpi.id, i) % 60) }))
+  const max = Math.max(...bars.map(b => b.pct))
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="bc-list">
+        {bars.map(({ label, pct }) => (
+          <div key={label} className="bc-row">
+            <span className="bc-cat">{label}</span>
+            <div className="bc-track"><div className="bc-fill" style={{ width: `${(pct / max) * 100}%` }} /></div>
+            <span className="bc-val">{pct}%</span>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+// ─── Line / area chart ────────────────────────────────────────────────────────
+function LineChartWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-line-area">
+        <svg viewBox="0 0 200 60" preserveAspectRatio="none" className="kw-lc-svg">
+          <path d="M0,50 C20,40 35,18 55,24 S88,8 110,14 S145,4 165,10 L200,7"
+                fill="none" stroke="#ddd8cf" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M0,50 C20,40 35,18 55,24 S88,8 110,14 S145,4 165,10 L200,7 L200,60 L0,60 Z"
+                fill="#f0ece5" />
+        </svg>
+      </div>
+    </>
+  )
+}
+
+function LineChartContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul']
+  const vals = months.map((_, i) => 15 + (mockHash(kpi.id, i) % 70))
+  const max = Math.max(...vals); const min = Math.min(...vals); const range = max - min || 1
+  const pts = vals.map((v, i) => `${(i / 6) * 200},${58 - ((v - min) / range) * 50}`).join(' ')
+  const area = `0,60 ${pts} 200,60`
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="lc-wrap">
+        <svg viewBox="0 0 200 65" preserveAspectRatio="none" className="lc-svg">
+          <polygon points={area} fill="rgba(149,25,255,0.08)" />
+          <polyline points={pts} fill="none" stroke="#9519ff" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div className="lc-labels">
+          {months.filter((_, i) => i % 2 === 0).map(m => <span key={m} className="lc-label">{m}</span>)}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Donut / pie chart ────────────────────────────────────────────────────────
+function DonutWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-donut-row">
+        <div className="kw-donut-ring" />
+        <div className="kw-donut-legend">
+          {[72, 52, 38].map((w, i) => (
+            <div key={i} className="kw-dl-row">
+              <div className="kw-dl-dot" style={{ opacity: 1 - i * 0.25 }} />
+              <div className="kw-dl-line" style={{ width: `${w}%` }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function DonutContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const h0 = mockHash(kpi.id, 0) % 40 + 30  // 30–70
+  const h1 = mockHash(kpi.id, 1) % 30 + 15  // 15–45
+  const h2 = 100 - h0 - h1
+  const segs = [
+    { label: 'Segment A', pct: h0, color: '#9519ff' },
+    { label: 'Segment B', pct: h1, color: '#0b88be' },
+    { label: 'Segment C', pct: h2, color: '#e2d9f5' },
+  ]
+  const grad = `conic-gradient(${segs[0].color} 0% ${segs[0].pct}%, ${segs[1].color} ${segs[0].pct}% ${segs[0].pct + segs[1].pct}%, ${segs[2].color} ${segs[0].pct + segs[1].pct}% 100%)`
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="dc-wrap">
+        <div className="dc-chart" style={{ background: grad }}><div className="dc-hole" /></div>
+        <div className="dc-legend">
+          {segs.map(s => (
+            <div key={s.label} className="dc-row">
+              <div className="dc-dot" style={{ background: s.color }} />
+              <span className="dc-label">{s.label}</span>
+              <span className="dc-pct">{s.pct}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Tabla ────────────────────────────────────────────────────────────────────
+function TableWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-tbl">
+        <div className="kw-tbl-head">
+          {[42, 30, 28].map((w, i) => <div key={i} className="kw-tbl-hcell" style={{ width: `${w}%` }} />)}
+        </div>
+        {[1, 2, 3, 4].map(r => (
+          <div key={r} className="kw-tbl-row">
+            {[42, 30, 28].map((w, i) => <div key={i} className="kw-tbl-cell" style={{ width: `${w}%`, opacity: 1 - r * 0.07 }} />)}
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+function TableContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const names = ['Item A', 'Item B', 'Item C', 'Item D', 'Item E']
+  const rows = names.map((name, r) => {
+    const val = 100 + (mockHash(kpi.id, r * 3 + 1) % 900)
+    const chg = (mockHash(kpi.id, r * 3 + 2) % 3) !== 0
+    const pct = ((mockHash(kpi.id, r * 3 + 3) * 7 + 13) % 300) / 10
+    return { name, val: val.toLocaleString(), chg, pct: `${chg ? '+' : '−'}${pct.toFixed(1)}%` }
+  })
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="tbl-wrap">
+        <table className="kpi-table">
+          <thead><tr><th>Name</th><th>Value</th><th>Chg.</th></tr></thead>
+          <tbody>
+            {rows.map(row => (
+              <tr key={row.name}>
+                <td>{row.name}</td>
+                <td>{row.val}</td>
+                <td className={row.chg ? 'up' : 'down'}>{row.pct}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+// ─── Wireframe (modo builder) ─────────────────────────────────────────────────
+function KpiCardWireframe({ kpi, size }) {
+  const KpiIcon = kpi.icon
+  const isLarge = size === 'L' || size === 'XL'
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className={`kw-body${isLarge ? ' large' : ''}`}>
+        <div className="kw-left">
+          <div className="kw-value-block" />
+          <div className="kw-trend-block" />
+        </div>
+        {isLarge && <div className="kw-chart-block" />}
+      </div>
+      {isLarge && (
+        <div className="kw-footer">
+          <div className="kw-bar-block" />
+        </div>
+      )}
+    </>
+  )
+}
+
+// ─── Contenido visual real (modo preview) ─────────────────────────────────────
 function KpiCardContent({ kpi, size, stats, isEditing }) {
   const KpiIcon = kpi.icon
   const isLarge = size === 'L' || size === 'XL'
@@ -142,31 +381,50 @@ function EditHandles({ card, onResize, onResizeV, onRemove }) {
 }
 
 // ─── Shell compartida para cards KPI (sortable y estática) ───────────────────
-function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gridRow, gridCol, style, dragProps, onSelect, onResize, onResizeV, onRemove }) {
-  const stats   = mockStats(card.kpiId)
+function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gridRow, gridCol, style, dragProps, onSelect, onResize, onResizeV, onRemove, previewMode, kpiVizTypes }) {
+  const stats   = previewMode ? mockStats(card.kpiId) : null
   const vHeight = V_HEIGHTS[card.sizeV ?? 'S'] ?? 130
-  const gridStyle = {
-    gridRow,
-    gridColumn: `${gridCol} / span ${colSpan}`,
-    minHeight: vHeight,
+  const vizType = kpiVizTypes?.[card.kpiId] ?? card.vizType ?? 'kpi'
+
+  const renderWireframe = () => {
+    switch (vizType) {
+      case 'bar':   return <BarChartWireframe kpi={kpi} />
+      case 'line':  return <LineChartWireframe kpi={kpi} />
+      case 'donut': return <DonutWireframe kpi={kpi} />
+      case 'table': return <TableWireframe kpi={kpi} />
+      default:      return <KpiCardWireframe kpi={kpi} size={card.size} />
+    }
   }
+
+  const renderPreview = () => {
+    switch (vizType) {
+      case 'bar':   return <BarChartContent kpi={kpi} />
+      case 'line':  return <LineChartContent kpi={kpi} />
+      case 'donut': return <DonutContent kpi={kpi} />
+      case 'table': return <TableContent kpi={kpi} />
+      default:      return <KpiCardContent kpi={kpi} size={card.size} stats={stats} isEditing={false} />
+    }
+  }
+
   return (
     <div
       ref={cardRef}
-      className={`canvas-kpi-card${isSelected ? ' selected' : ''}${isDragging ? ' dragging' : ''}`}
-      style={{ ...gridStyle, ...style }}
-      onClick={() => onSelect(card.id)}
-      onMouseDown={e => e.stopPropagation()}
-      {...dragProps}
+      className={`canvas-kpi-card${previewMode ? ' preview' : ''}${isSelected && !previewMode ? ' selected' : ''}${isDragging ? ' dragging' : ''}`}
+      style={{ gridRow, gridColumn: `${gridCol} / span ${colSpan}`, minHeight: vHeight, ...style }}
+      onClick={previewMode ? undefined : () => onSelect(card.id)}
+      onMouseDown={previewMode ? undefined : e => e.stopPropagation()}
+      {...(previewMode ? {} : dragProps)}
     >
-      <KpiCardContent kpi={kpi} size={card.size} stats={stats} isEditing={isSelected} />
-      {isSelected && <EditHandles card={card} onResize={onResize} onResizeV={onResizeV} onRemove={onRemove} />}
+      {previewMode ? renderPreview() : renderWireframe()}
+      {isSelected && !previewMode && (
+        <EditHandles card={card} onResize={onResize} onResizeV={onResizeV} onRemove={onRemove} />
+      )}
     </div>
   )
 }
 
 // ─── Card KPI draggable ───────────────────────────────────────────────────────
-function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRemove, colSpan, gridRow, gridCol }) {
+function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRemove, colSpan, gridRow, gridCol, previewMode, kpiVizTypes }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
   const kpi = KPI_BY_ID[card.kpiId]
   if (!kpi) return null
@@ -186,12 +444,14 @@ function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRe
       onResize={onResize}
       onResizeV={onResizeV}
       onRemove={onRemove}
+      previewMode={previewMode}
+      kpiVizTypes={kpiVizTypes}
     />
   )
 }
 
 // ─── Title card draggable ─────────────────────────────────────────────────────
-function SortableTitleCard({ card, isSelected, onSelect, onRemove, onEdit, onResizeTitle, titleWidthPct, gridRow }) {
+function SortableTitleCard({ card, isSelected, onSelect, onRemove, onEdit, onResizeTitle, titleWidthPct, gridRow, previewMode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
   const stop = e => { e.stopPropagation(); e.nativeEvent?.stopImmediatePropagation?.() }
   const size = card.size ?? 'Full'
@@ -199,24 +459,25 @@ function SortableTitleCard({ card, isSelected, onSelect, onRemove, onEdit, onRes
   return (
     <div
       ref={setNodeRef}
-      className={`canvas-title-card${isSelected ? ' selected' : ''}${isDragging ? ' dragging' : ''}`}
+      className={`canvas-title-card${isSelected && !previewMode ? ' selected' : ''}${isDragging ? ' dragging' : ''}${previewMode ? ' preview' : ''}`}
       style={{ gridRow, gridColumn: '1 / -1', transform: CSS.Translate.toString(transform), transition }}
-      onClick={() => onSelect(card.id)}
-      onMouseDown={e => e.stopPropagation()}
-      {...attributes} {...listeners}
+      onClick={previewMode ? undefined : () => onSelect(card.id)}
+      onMouseDown={previewMode ? undefined : e => e.stopPropagation()}
+      {...(previewMode ? {} : { ...attributes, ...listeners })}
     >
       {/* Caja de contenido visual (anchura variable) */}
       <div className="title-content-box" style={{ width: titleWidthPct }}>
-        <span className="title-grip-dot" />
+        {!previewMode && <span className="title-grip-dot" />}
         <input
           className="canvas-title-input"
           value={card.text}
-          onChange={e => onEdit(card.id, e.target.value)}
+          readOnly={previewMode}
+          onChange={previewMode ? undefined : e => onEdit(card.id, e.target.value)}
           placeholder="Section title..."
           onClick={e => e.stopPropagation()}
-          onPointerDown={e => e.stopPropagation()}
+          onPointerDown={previewMode ? undefined : e => e.stopPropagation()}
         />
-        {isSelected && (
+        {isSelected && !previewMode && (
           <button
             className="canvas-tb-del canvas-tb-del--title"
             onPointerDown={stop}
@@ -228,7 +489,7 @@ function SortableTitleCard({ card, isSelected, onSelect, onRemove, onEdit, onRes
       </div>
 
       {/* Manejador de anchura: en el borde derecho del content-box, picker fuera */}
-      {isSelected && (
+      {isSelected && !previewMode && (
         <div
           className="card-handle-right"
           style={{ left: `calc(${titleWidthPct} - 3px)` }}
@@ -266,40 +527,36 @@ function GhostCard({ card }) {
   if (!kpi) return null
   return (
     <div className="canvas-kpi-card ghost">
-      <KpiCardContent kpi={kpi} size={card.size} stats={mockStats(card.kpiId)} />
+      <KpiCardWireframe kpi={kpi} size={card.size} />
     </div>
   )
 }
 
-// ─── Modo agrupado: header de sección auto ────────────────────────────────────
-function AutoSectionHeader({ group, gridRow }) {
+// ─── Header de sección sortable (arrastrable como bloque de grupo) ────────────
+function SortableGroupHeader({ card, gridRow, gridCol, colSpan, previewMode }) {
+  const { group, groupId } = card
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: card.id,
+    data: { type: 'group-header', groupId },
+  })
   const GIcon = group.icon
   return (
-    <div className="canvas-auto-section-hdr" style={{ gridRow, gridColumn: '1 / -1' }}>
+    <div
+      ref={setNodeRef}
+      className={`canvas-auto-section-hdr${isDragging ? ' dragging' : ''}`}
+      style={{
+        gridRow,
+        gridColumn: `${gridCol} / span ${colSpan}`,
+        transform: CSS.Translate.toString(transform),
+        transition,
+        cursor: previewMode ? 'default' : undefined,
+      }}
+      {...(previewMode ? {} : { ...attributes, ...listeners })}
+    >
+      {!previewMode && <GripVertical size={12} className="auto-hdr-grip" />}
       <div className="auto-hdr-icon"><GIcon size={12} /></div>
       <span className="auto-hdr-label">{group.label}</span>
     </div>
-  )
-}
-
-// ─── Card KPI estática (modo agrupado, sin drag) ──────────────────────────────
-function StaticKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRemove, colSpan }) {
-  const kpi = KPI_BY_ID[card.kpiId]
-  if (!kpi) return null
-  return (
-    <KpiCardShell
-      kpi={kpi}
-      card={card}
-      isSelected={isSelected}
-      isDragging={false}
-      colSpan={colSpan}
-      style={{}}
-      dragProps={{}}
-      onSelect={onSelect}
-      onResize={onResize}
-      onResizeV={onResizeV}
-      onRemove={onRemove}
-    />
   )
 }
 
@@ -329,32 +586,100 @@ function insertCardInGroupOrder(cards, newCard) {
   return [...result, newCard]
 }
 
-// ─── Build display agrupado (preserva el orden de drag del usuario) ───────────
-function buildGrouped(cards, selectedIds) {
-  const result = []
-  let lastGroupId = null
-  let headerCount = 0
-
-  cards.forEach(card => {
+// ─── Construye bloques de grupo a partir del array de cards ──────────────────
+function buildGroupBlocks(cards, selectedIds) {
+  const blocks = []
+  let current = null
+  for (const card of cards) {
     if (card.type === 'title') {
-      lastGroupId = null  // un título manual resetea el tracking de grupo
-      result.push(card)
-      return
+      current = null
+      blocks.push({ type: 'title', card })
+      continue
     }
-    if (card.type !== 'kpi' || !selectedIds.includes(card.kpiId)) return
-
+    if (card.type !== 'kpi' || !selectedIds.includes(card.kpiId)) continue
     const group   = KPI_GROUPS.find(g => g.items.some(i => i.id === card.kpiId))
     const groupId = group?.id ?? null
+    if (!current || current.groupId !== groupId) {
+      current = { type: 'group', groupId, group, headerId: `grp::${groupId}`, cards: [] }
+      blocks.push(current)
+    }
+    current.cards.push(card)
+  }
+  return blocks
+}
 
-    if (groupId !== lastGroupId) {
-      if (group) result.push({ id: `auto-hdr-${groupId}-${headerCount++}`, type: 'auto-header', group })
-      lastGroupId = groupId
+// ─── Ancho natural de un grupo: suma de spans capped al grid ─────────────────
+function groupNaturalWidth(groupCards, cols, colSpanFor) {
+  if (!groupCards.length) return 0
+  return Math.min(groupCards.reduce((s, c) => s + colSpanFor(c), 0), cols)
+}
+
+// ─── Empaqueta bloques en bandas horizontales (greedy first-fit) ──────────────
+function packBands(blocks, cols, colSpanFor) {
+  const bands = []
+  let band = null
+  const flush = () => { if (band) { bands.push(band); band = null } }
+
+  for (const block of blocks) {
+    if (block.type === 'title') {
+      flush()
+      bands.push({ type: 'title', card: block.card })
+      continue
+    }
+    const w = groupNaturalWidth(block.cards, cols, colSpanFor)
+    if (!w) continue
+    if (!band) band = { type: 'groups', groups: [], usedCols: 0 }
+    if (band.usedCols + w <= cols) {
+      band.groups.push({ ...block, startCol: band.usedCols + 1, width: w })
+      band.usedCols += w
+    } else {
+      flush()
+      band = { type: 'groups', groups: [{ ...block, startCol: 1, width: w }], usedCols: w }
+    }
+  }
+  flush()
+  return bands
+}
+
+// ─── Layout completo con empaquetado horizontal de grupos ─────────────────────
+function computeBandedLayout(blocks, cols, colSpanFor) {
+  const bands = packBands(blocks, cols, colSpanFor)
+  const items = []
+  let globalRow = 1
+
+  for (const band of bands) {
+    if (band.type === 'title') {
+      items.push({ card: band.card, row: globalRow, col: 1, span: cols })
+      globalRow++
+      continue
     }
 
-    result.push(card)
-  })
+    // Fila de headers (uno por grupo en la banda)
+    for (const { group, groupId, headerId, startCol, width } of band.groups) {
+      items.push({
+        card: { id: headerId, type: 'auto-header', group, groupId },
+        row: globalRow, col: startCol, span: width,
+      })
+    }
+    globalRow++
 
-  return result
+    // Filas de cards (cada grupo dentro de su slice de columnas)
+    let maxCardRows = 0
+    for (const { cards: gCards, startCol, width } of band.groups) {
+      let col = startCol, rowOff = 0
+      for (const card of gCards) {
+        const span = Math.min(colSpanFor(card), width)
+        if (col + span - 1 > startCol + width - 1) { rowOff++; col = startCol }
+        items.push({ card, row: globalRow + rowOff, col, span })
+        col += span
+        if (col > startCol + width - 1) { rowOff++; col = startCol }
+      }
+      maxCardRows = Math.max(maxCardRows, col > startCol ? rowOff + 1 : rowOff)
+    }
+    globalRow += maxCardRows
+  }
+
+  return items
 }
 
 // ─── Calcula posiciones explícitas de grid para cada elemento ─────────────────
@@ -396,6 +721,49 @@ function bgCellsFrom(layoutItems, cols) {
   return cells
 }
 
+// ─── Reordena grupos completos usando arrayMove sobre el orden de bloques ──────
+function moveGroupBlock(cards, activeGroupId, targetGroupId) {
+  const getGid = c => KPI_GROUPS.find(g => g.items.some(i => i.id === c.kpiId))?.id ?? null
+
+  // Orden de grupos (primera aparición)
+  const groupOrder = []
+  const seen = new Set()
+  for (const card of cards) {
+    if (card.type !== 'kpi') continue
+    const gId = getGid(card)
+    if (gId && !seen.has(gId)) { groupOrder.push(gId); seen.add(gId) }
+  }
+
+  const oldIdx = groupOrder.indexOf(activeGroupId)
+  const newIdx = groupOrder.indexOf(targetGroupId)
+  if (oldIdx === -1 || newIdx === -1 || oldIdx === newIdx) return cards
+
+  const newOrder = arrayMove(groupOrder, oldIdx, newIdx)
+
+  // Reconstruir cards en el nuevo orden de grupos, preservando títulos
+  const kpisByGroup = {}
+  for (const gId of groupOrder) kpisByGroup[gId] = cards.filter(c => c.type === 'kpi' && getGid(c) === gId)
+  const newKpis = newOrder.flatMap(gId => kpisByGroup[gId])
+
+  let kpiI = 0
+  return cards.map(card => card.type === 'kpi' ? newKpis[kpiI++] : card)
+}
+
+// ─── Reordena todos los grupos según una lista de IDs de grupo ───────────────
+function reorderAllGroups(cards, newGroupIds) {
+  const getGid = c => KPI_GROUPS.find(g => g.items.some(i => i.id === c.kpiId))?.id ?? null
+  const kpisByGroup = {}
+  for (const gId of newGroupIds) kpisByGroup[gId] = []
+  for (const card of cards) {
+    if (card.type !== 'kpi') continue
+    const gId = getGid(card)
+    if (gId && kpisByGroup[gId]) kpisByGroup[gId].push(card)
+  }
+  const newKpis = newGroupIds.flatMap(gId => kpisByGroup[gId] ?? [])
+  let i = 0
+  return cards.map(card => card.type === 'kpi' ? newKpis[i++] : card)
+}
+
 // Reordena las cards de un grupo según el nuevo orden dictado por la sidebar
 function reorderGroupCards(prev, kpiIds) {
   const cardMap = Object.fromEntries(
@@ -415,8 +783,23 @@ function reorderGroupCards(prev, kpiIds) {
   }, [])
 }
 
+// ─── Extrae el orden actual de grupos y cards del estado del canvas ───────────
+function extractCanvasOrder(cards) {
+  const groupIds   = []
+  const cardOrders = {}
+  const seen       = new Set()
+  for (const card of cards) {
+    if (card.type !== 'kpi') continue
+    const gId = KPI_GROUPS.find(g => g.items.some(i => i.id === card.kpiId))?.id
+    if (!gId) continue
+    if (!seen.has(gId)) { groupIds.push(gId); seen.add(gId); cardOrders[gId] = [] }
+    cardOrders[gId].push(card.kpiId)
+  }
+  return { groupIds, cardOrders }
+}
+
 // ─── Canvas ───────────────────────────────────────────────────────────────────
-export default function Canvas({ device, selectedIds = [], showGrid = true, groupBySection = true, onCardSelect, groupReorderSignal }) {
+export default function Canvas({ device, selectedIds = [], showGrid = true, groupBySection = true, onCardSelect, groupReorderSignal, onCardsOrderChange, previewMode = false, kpiVizTypes = {} }) {
   const [cards, setCards]    = useState([])
   const [selectedId, setSel] = useState(null)
   const [activeId, setAct]   = useState(null)
@@ -426,6 +809,8 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
 
   // Ref para leer groupBySection sin añadirlo a los deps del effect de selectedIds
   const groupBySectionRef = useRef(groupBySection)
+  // Marca que el último cambio de cards vino de un drag del usuario
+  const dragSourceRef = useRef(false)
 
   // Sincroniza cards KPI con selectedIds insertando en posición de grupo si procede
   useEffect(() => {
@@ -463,11 +848,21 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
     }
   }, [cards])
 
-  // Responde a reordenaciones de grupo iniciadas desde la sidebar
+  // Responde a reordenaciones iniciadas desde la sidebar (cards dentro de grupo o grupos entre sí)
   useEffect(() => {
     if (!groupReorderSignal) return
-    setCards(prev => reorderGroupCards(prev, groupReorderSignal.kpiIds))
+    if (groupReorderSignal.type === 'groups')
+      setCards(prev => reorderAllGroups(prev, groupReorderSignal.groupIds))
+    else
+      setCards(prev => reorderGroupCards(prev, groupReorderSignal.kpiIds))
   }, [groupReorderSignal])
+
+  // Emite el nuevo orden al padre cuando el usuario arrastra en el canvas
+  useEffect(() => {
+    if (!dragSourceRef.current) return
+    dragSourceRef.current = false
+    onCardsOrderChange?.(extractCanvasOrder(cards))
+  }, [cards])  // eslint-disable-line
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
@@ -475,12 +870,44 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
   const handleDragCancel = () => setAct(null)
   const handleDragEnd    = ({ active, over }) => {
     setAct(null)
-    if (over && active.id !== over.id)
-      setCards(prev => arrayMove(
-        prev,
-        prev.findIndex(c => c.id === active.id),
-        prev.findIndex(c => c.id === over.id)
-      ))
+    if (!over || active.id === over.id) return
+
+    const activeIsHeader = active.data.current?.type === 'group-header'
+    const overIsHeader   = over.data.current?.type   === 'group-header'
+
+    // Caso 1: arrastrar un grupo completo
+    if (activeIsHeader) {
+      const activeGroupId = active.data.current.groupId
+      const targetGroupId = overIsHeader
+        ? over.data.current.groupId
+        : KPI_GROUPS.find(g => g.items.some(i => i.id === cards.find(c => c.id === over.id)?.kpiId))?.id
+      if (targetGroupId && activeGroupId !== targetGroupId) {
+        dragSourceRef.current = true
+        setCards(prev => moveGroupBlock(prev, activeGroupId, targetGroupId))
+      }
+      return
+    }
+
+    // Caso 2: arrastrar una card sobre un header → ignorar
+    if (overIsHeader) return
+
+    // Caso 3: arrastrar card → solo dentro del mismo grupo en modo agrupado
+    if (groupBySection) {
+      const aCard = cards.find(c => c.id === active.id)
+      const oCard = cards.find(c => c.id === over.id)
+      if (aCard?.type === 'kpi' && oCard?.type === 'kpi') {
+        const aGroup = KPI_GROUPS.find(g => g.items.some(i => i.id === aCard.kpiId))
+        const oGroup = KPI_GROUPS.find(g => g.items.some(i => i.id === oCard.kpiId))
+        if (aGroup?.id !== oGroup?.id) return
+      }
+    }
+
+    dragSourceRef.current = true
+    setCards(prev => arrayMove(
+      prev,
+      prev.findIndex(c => c.id === active.id),
+      prev.findIndex(c => c.id === over.id)
+    ))
   }
 
   const resizeCard      = (id, size)  => setCards(prev => prev.map(c => c.id === id ? { ...c, size }  : c))
@@ -507,31 +934,41 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
     return `${Math.min((span / cols) * 100, 100)}%`
   }
 
-  const activeCard   = cards.find(c => c.id === activeId)
-  const hasKpis      = cards.some(c => c.type === 'kpi')
-  const displayCards = groupBySection && hasKpis ? buildGrouped(cards, selectedIds) : cards
-  const colSpanFor   = (card) => Math.min(sizeCols[card.size] ?? 3, cols)
+  const hasKpis    = cards.some(c => c.type === 'kpi')
+  const colSpanFor = (card) => Math.min(sizeCols[card.size] ?? 3, cols)
 
-  const layoutItems  = hasKpis ? computeLayout(displayCards, cols, colSpanFor) : []
-  const bgCells      = showGrid ? bgCellsFrom(layoutItems, cols) : []
+  const layoutItems = hasKpis
+    ? (groupBySection
+        ? computeBandedLayout(buildGroupBlocks(cards, selectedIds), cols, colSpanFor)
+        : computeLayout(cards, cols, colSpanFor))
+    : []
+  const bgCells = showGrid ? bgCellsFrom(layoutItems, cols) : []
+
+  // IDs para SortableContext: cards reales + headers de grupo (en modo agrupado)
+  const headerIds    = layoutItems.filter(i => i.card.type === 'auto-header').map(i => i.card.id)
+  const sortableIds  = [...headerIds, ...cards.map(c => c.id)]
+  const activeItem   = layoutItems.find(i => i.card.id === activeId)
+  const activeCard   = activeItem?.card ?? cards.find(c => c.id === activeId)
 
   return (
-    <main className="canvas" onMouseDown={deselect}>
+    <main className={`canvas${previewMode ? ' preview-mode' : ''}`} onMouseDown={previewMode ? undefined : deselect}>
 
-      {/* Barra superior */}
-      <div className="canvas-top-bar" onMouseDown={e => e.stopPropagation()}>
-        <button className="canvas-top-btn" onClick={addTitle} title="Add section title">
-          <Heading1 size={13} /><span>Add title</span>
-        </button>
-      </div>
+      {/* Barra superior (oculta en preview) */}
+      {!previewMode && (
+        <div className="canvas-top-bar" onMouseDown={e => e.stopPropagation()}>
+          <button className="canvas-top-btn" onClick={addTitle} title="Add section title">
+            <Heading1 size={13} /><span>Add title</span>
+          </button>
+        </div>
+      )}
 
       <div
         className="canvas-inner"
         style={{ maxWidth: DEVICE_WIDTH[device] }}
-        onMouseDown={deselect}
+        onMouseDown={previewMode ? undefined : deselect}
       >
-        {/* Overlay de dim (visual; pointer-events: none → los clicks pasan a canvas-inner) */}
-        {selectedId && <div className="canvas-dim-overlay" />}
+        {/* Overlay de dim (solo en modo builder) */}
+        {selectedId && !previewMode && <div className="canvas-dim-overlay" />}
 
         {/* Estado vacío */}
         {!hasKpis ? (
@@ -548,8 +985,7 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
-            {/* SortableContext solo contiene cards reales (no auto-headers) */}
-            <SortableContext items={cards.map(c => c.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
               <div className="canvas-grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
 
                 {/* Celdas de fondo: solo en filas con KPI cards, mismo grid → alineación exacta */}
@@ -564,7 +1000,7 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
                 {/* Cards y headers con posición explícita */}
                 {layoutItems.map(({ card, row, col, span }) => {
                   if (card.type === 'auto-header')
-                    return <AutoSectionHeader key={card.id} group={card.group} gridRow={row} />
+                    return <SortableGroupHeader key={card.id} card={card} gridRow={row} gridCol={col} colSpan={span} previewMode={previewMode} />
                   if (card.type === 'title')
                     return (
                       <SortableTitleCard
@@ -577,6 +1013,7 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
                         onResizeTitle={resizeTitleCard}
                         titleWidthPct={titleWidthFor(card)}
                         gridRow={row}
+                        previewMode={previewMode}
                       />
                     )
                   return (
@@ -591,6 +1028,8 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
                       onResize={resizeCard}
                       onResizeV={resizeVCard}
                       onRemove={removeCard}
+                      previewMode={previewMode}
+                      kpiVizTypes={kpiVizTypes}
                     />
                   )
                 })}
@@ -598,7 +1037,18 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
             </SortableContext>
 
             <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
-              {activeCard ? <GhostCard card={activeCard} /> : null}
+              {activeCard?.type === 'auto-header'
+                ? (
+                  <div className="canvas-auto-section-hdr ghost">
+                    <GripVertical size={12} className="auto-hdr-grip" />
+                    <div className="auto-hdr-icon">
+                      {(() => { const G = activeCard.group.icon; return <G size={12} /> })()}
+                    </div>
+                    <span className="auto-hdr-label">{activeCard.group.label}</span>
+                  </div>
+                )
+                : activeCard ? <GhostCard card={activeCard} /> : null
+              }
             </DragOverlay>
           </DndContext>
         )}
