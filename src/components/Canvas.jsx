@@ -22,7 +22,7 @@ const DEVICE_WIDTH = { Smartphone: '375px', Tablet: '768px', Desktop: '100%' }
 const SIZE_SPANS   = {
   Desktop:    { S: 3, M: 4, L: 6, XL: 9 },
   Tablet:     { S: 3, M: 3, L: 6, XL: 6 },
-  Smartphone: { S: 2, M: 2, L: 2, XL: 2 },
+  Smartphone: { S: 1, M: 2, L: 2, XL: 2 },
 }
 const SIZES       = ['S', 'M', 'L', 'XL']
 const TITLE_SIZES = ['S', 'M', 'L', 'XL', 'Full']
@@ -34,7 +34,7 @@ const V_HEIGHTS = { S: 130, M: 180, L: 240, XL: 310 }
 const TITLE_SPANS = {
   Desktop:    { S: 3, M: 4, L: 6, XL: 9, Full: 12 },
   Tablet:     { S: 3, M: 3, L: 6, XL: 6, Full: 6 },
-  Smartphone: { S: 2, M: 2, L: 2, XL: 2, Full: 2 },
+  Smartphone: { S: 1, M: 2, L: 2, XL: 2, Full: 2 },
 }
 
 // ─── Mock data deterministico ─────────────────────────────────────────────────
