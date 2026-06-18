@@ -269,14 +269,120 @@ function TableContent({ kpi }) {
   )
 }
 
+// ─── Area chart ──────────────────────────────────────────────────────────────
+function AreaChartWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-line-area kw-area-large">
+        <svg viewBox="0 0 200 80" preserveAspectRatio="none" className="kw-lc-svg">
+          <path d="M0,70 C20,55 35,25 55,32 S88,10 110,18 S145,5 165,12 L200,8"
+                fill="none" stroke="#ddd8cf" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M0,70 C20,55 35,25 55,32 S88,10 110,18 S145,5 165,12 L200,8 L200,80 L0,80 Z"
+                fill="#f0ece5" />
+        </svg>
+        <div className="kw-lc-x-axis">
+          {['Jan','Mar','May','Jul','Sep','Nov'].map(m => <span key={m} className="kw-lc-tick">{m}</span>)}
+        </div>
+      </div>
+    </>
+  )
+}
+
+function AreaChartContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const vals = months.map((_, i) => 10 + (mockHash(kpi.id, i) % 80))
+  const max = Math.max(...vals); const min = Math.min(...vals); const range = max - min || 1
+  const w = 200; const h = 80
+  const pts = vals.map((v, i) => `${(i / 11) * w},${h - 4 - ((v - min) / range) * (h - 8)}`).join(' ')
+  const area = `0,${h} ${pts} ${w},${h}`
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="lc-wrap lc-area-large">
+        <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="lc-svg">
+          <polygon points={area} fill="rgba(149,25,255,0.10)" />
+          <polyline points={pts} fill="none" stroke="#9519ff" strokeWidth="2"
+                    strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <div className="lc-labels">
+          {months.filter((_,i) => i % 2 === 0).map(m => <span key={m} className="lc-label">{m}</span>)}
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Geo / Map ────────────────────────────────────────────────────────────────
+function GeoWireframe({ kpi }) {
+  const KpiIcon = kpi.icon
+  return (
+    <>
+      <div className="kw-header">
+        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        <span className="kw-name">{kpi.label}</span>
+      </div>
+      <div className="kw-geo-wrap">
+        <svg viewBox="0 0 200 110" className="kw-geo-svg">
+          <rect x="0" y="0" width="200" height="110" rx="4" fill="#f0ece5"/>
+          <ellipse cx="100" cy="55" rx="55" ry="38" fill="#ddd8cf"/>
+          <ellipse cx="100" cy="55" rx="32" ry="22" fill="#c9c4bb"/>
+          <circle cx="100" cy="55" r="7" fill="#e9e4d7"/>
+          <circle cx="78" cy="44" r="4" fill="#e9e4d7"/>
+          <circle cx="120" cy="62" r="5" fill="#e9e4d7"/>
+        </svg>
+      </div>
+    </>
+  )
+}
+
+function GeoContent({ kpi }) {
+  const KpiIcon = kpi.icon
+  const dots = [
+    { cx: 100, cy: 55, r: 8, color: '#9519ff' },
+    { cx: 75,  cy: 43, r: 5, color: '#0b88be' },
+    { cx: 122, cy: 62, r: 6, color: '#9519ff' },
+    { cx: 88,  cy: 70, r: 4, color: '#0b88be' },
+  ]
+  return (
+    <>
+      <div className="cc-header">
+        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        <span className="cc-name">{kpi.label}</span>
+      </div>
+      <div className="geo-wrap">
+        <svg viewBox="0 0 200 110" className="geo-svg">
+          <rect x="0" y="0" width="200" height="110" rx="4" fill="#f0ece5"/>
+          <ellipse cx="100" cy="55" rx="55" ry="38" fill="#e2ddd6"/>
+          <ellipse cx="100" cy="55" rx="32" ry="22" fill="#d5d0c7"/>
+          {dots.map((d, i) => (
+            <g key={i}>
+              <circle cx={d.cx} cy={d.cy} r={d.r + 4} fill={d.color} opacity="0.15"/>
+              <circle cx={d.cx} cy={d.cy} r={d.r} fill={d.color} opacity="0.85"/>
+            </g>
+          ))}
+        </svg>
+      </div>
+    </>
+  )
+}
+
 // ─── Wireframe (modo builder) ─────────────────────────────────────────────────
-function KpiCardWireframe({ kpi, size }) {
+function KpiCardWireframe({ kpi, size, config = {} }) {
   const KpiIcon = kpi.icon
   const isLarge = size === 'L' || size === 'XL'
   return (
     <>
       <div className="kw-header">
-        <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>
+        {config.showKpiIcon !== false && <div className="kw-icon"><KpiIcon size={11} strokeWidth={1.5} /></div>}
         <span className="kw-name">{kpi.label}</span>
       </div>
       <div className={`kw-body${isLarge ? ' large' : ''}`}>
@@ -291,18 +397,23 @@ function KpiCardWireframe({ kpi, size }) {
           <div className="kw-bar-block" />
         </div>
       )}
+      {config.visualProgressBar !== false && !isLarge && (
+        <div className="kw-progress">
+          <div className="kw-progress-fill" style={{ width: '68%' }} />
+        </div>
+      )}
     </>
   )
 }
 
 // ─── Contenido visual real (modo preview) ─────────────────────────────────────
-function KpiCardContent({ kpi, size, stats, isEditing }) {
+function KpiCardContent({ kpi, size, stats, isEditing, config = {} }) {
   const KpiIcon = kpi.icon
   const isLarge = size === 'L' || size === 'XL'
   return (
     <>
       <div className="cc-header">
-        <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>
+        {config.showKpiIcon !== false && <div className="cc-icon"><KpiIcon size={13} strokeWidth={2} /></div>}
         <span className="cc-name">{kpi.label}</span>
         <button
           className={`cc-info-btn${isEditing ? ' editing' : ''}`}
@@ -318,6 +429,14 @@ function KpiCardContent({ kpi, size, stats, isEditing }) {
           <span className={`cc-trend${stats.trendUp ? ' up' : ' down'}`}>
             {stats.trendUp ? '↑' : '↓'} {stats.trend}
           </span>
+          {config.vsPreviousPeriod !== false && !isLarge && (
+            <div className="cc-vs-period">
+              <span className="cc-vs-label">vs prev.</span>
+              <span className={`cc-vs-val ${stats.trendUp ? 'up' : 'down'}`}>
+                {stats.trendUp ? '↑' : '↓'} {stats.trend}
+              </span>
+            </div>
+          )}
         </div>
         {isLarge && <div className="cc-right"><span className="cc-vs">vs prev. period</span></div>}
       </div>
@@ -327,6 +446,11 @@ function KpiCardContent({ kpi, size, stats, isEditing }) {
             <div className="cc-bar-fill" style={{ width: `${stats.pct}%` }} />
           </div>
           <span className="cc-bar-pct">{stats.pct}%</span>
+        </div>
+      )}
+      {config.visualProgressBar !== false && !isLarge && (
+        <div className="cc-progress">
+          <div className="cc-progress-fill" style={{ width: `${stats.pct}%` }} />
         </div>
       )}
     </>
@@ -381,10 +505,11 @@ function EditHandles({ card, onResize, onResizeV, onRemove }) {
 }
 
 // ─── Shell compartida para cards KPI (sortable y estática) ───────────────────
-function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gridRow, gridCol, style, dragProps, onSelect, onResize, onResizeV, onRemove, previewMode, kpiVizTypes }) {
+function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gridRow, gridCol, style, dragProps, onSelect, onResize, onResizeV, onRemove, previewMode, kpiVizTypes, kpiConfigs }) {
   const stats   = previewMode ? mockStats(card.kpiId) : null
   const vHeight = V_HEIGHTS[card.sizeV ?? 'S'] ?? 130
   const vizType = kpiVizTypes?.[card.kpiId] ?? card.vizType ?? 'kpi'
+  const config  = kpiConfigs?.[card.kpiId] ?? {}
 
   const renderWireframe = () => {
     switch (vizType) {
@@ -392,7 +517,9 @@ function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gri
       case 'line':  return <LineChartWireframe kpi={kpi} />
       case 'donut': return <DonutWireframe kpi={kpi} />
       case 'table': return <TableWireframe kpi={kpi} />
-      default:      return <KpiCardWireframe kpi={kpi} size={card.size} />
+      case 'area':  return <AreaChartWireframe kpi={kpi} />
+      case 'geo':   return <GeoWireframe kpi={kpi} />
+      default:      return <KpiCardWireframe kpi={kpi} size={card.size} config={config} />
     }
   }
 
@@ -402,7 +529,9 @@ function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gri
       case 'line':  return <LineChartContent kpi={kpi} />
       case 'donut': return <DonutContent kpi={kpi} />
       case 'table': return <TableContent kpi={kpi} />
-      default:      return <KpiCardContent kpi={kpi} size={card.size} stats={stats} isEditing={false} />
+      case 'area':  return <AreaChartContent kpi={kpi} />
+      case 'geo':   return <GeoContent kpi={kpi} />
+      default:      return <KpiCardContent kpi={kpi} size={card.size} stats={stats} isEditing={false} config={config} />
     }
   }
 
@@ -424,7 +553,7 @@ function KpiCardShell({ cardRef, kpi, card, isSelected, isDragging, colSpan, gri
 }
 
 // ─── Card KPI draggable ───────────────────────────────────────────────────────
-function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRemove, colSpan, gridRow, gridCol, previewMode, kpiVizTypes }) {
+function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRemove, colSpan, gridRow, gridCol, previewMode, kpiVizTypes, kpiConfigs }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
   const kpi = KPI_BY_ID[card.kpiId]
   if (!kpi) return null
@@ -446,6 +575,7 @@ function SortableKpiCard({ card, isSelected, onSelect, onResize, onResizeV, onRe
       onRemove={onRemove}
       previewMode={previewMode}
       kpiVizTypes={kpiVizTypes}
+      kpiConfigs={kpiConfigs}
     />
   )
 }
@@ -799,7 +929,7 @@ function extractCanvasOrder(cards) {
 }
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
-export default function Canvas({ device, selectedIds = [], showGrid = true, groupBySection = true, onCardSelect, groupReorderSignal, onCardsOrderChange, previewMode = false, kpiVizTypes = {} }) {
+export default function Canvas({ device, selectedIds = [], showGrid = true, groupBySection = true, onCardSelect, groupReorderSignal, onCardsOrderChange, previewMode = false, kpiVizTypes = {}, kpiConfigs = {} }) {
   const [cards, setCards]    = useState([])
   const [selectedId, setSel] = useState(null)
   const [activeId, setAct]   = useState(null)
@@ -922,7 +1052,7 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
     const newId = selectedId === id ? null : id
     setSel(newId)
     const card = cards.find(c => c.id === newId)
-    onCardSelect?.(card?.kpiId ?? null)
+    onCardSelect?.(card?.kpiId ?? null, card?.size ?? null)
   }
   const deselect = () => { setSel(null); onCardSelect?.(null) }
   const addTitle  = () => setCards(prev => [...prev, { id: `title-${Date.now()}`, type: 'title', text: '', size: 'S' }])
@@ -1030,6 +1160,7 @@ export default function Canvas({ device, selectedIds = [], showGrid = true, grou
                       onRemove={removeCard}
                       previewMode={previewMode}
                       kpiVizTypes={kpiVizTypes}
+                      kpiConfigs={kpiConfigs}
                     />
                   )
                 })}

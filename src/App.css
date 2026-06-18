@@ -1863,3 +1863,170 @@ body {
   color: #797fa4;
 }
 .vtz-thumb.active .vtz-label { color: #9519ff; }
+
+/* ─── Progress bar wireframe ─────────────────────────────────────────────────── */
+.kw-progress {
+  height: 4px;
+  background: #e9e4d7;
+  border-radius: 2px;
+  margin: 6px 12px 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.kw-progress-fill {
+  height: 100%;
+  background: #c4bdb2;
+  border-radius: 2px;
+}
+
+/* ─── Progress bar preview ───────────────────────────────────────────────────── */
+.cc-progress {
+  height: 5px;
+  background: rgba(149,25,255,0.10);
+  border-radius: 3px;
+  margin: 4px 14px 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.cc-progress-fill {
+  height: 100%;
+  background: #9519ff;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* ─── Vs. Previous Period preview ────────────────────────────────────────────── */
+.cc-vs-period {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+.cc-vs-label {
+  font-size: 10px;
+  color: #a8aec8;
+  letter-spacing: 0.02em;
+}
+.cc-vs-val {
+  font-size: 11px;
+  font-weight: 600;
+}
+.cc-vs-val.up   { color: #40a02b; }
+.cc-vs-val.down { color: #e8535a; }
+
+/* ─── Area chart (extiende lc-wrap a altura completa) ────────────────────────── */
+.lc-area-large        { flex: 1; min-height: 0; }
+.lc-area-large .lc-svg { height: 100%; }
+.kw-area-large          { flex: 1; min-height: 0; }
+.kw-area-large .kw-lc-svg { height: 100%; }
+.kw-lc-x-axis {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 2px 0;
+}
+.kw-lc-tick {
+  font-size: 9px;
+  color: #b5b0a8;
+}
+
+/* ─── Geo / Map ──────────────────────────────────────────────────────────────── */
+.kw-geo-wrap, .geo-wrap {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  padding: 4px 8px 8px;
+  min-height: 0;
+}
+.kw-geo-svg, .geo-svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+
+/* ─── Resize handles más visibles ────────────────────────────────────────────── */
+.card-handle-right,
+.card-handle-bottom {
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.card-handle-right:hover,
+.card-handle-bottom:hover { opacity: 1; }
+.card-handle-pill {
+  width: 6px;
+  box-shadow: 0 0 0 2px rgba(11,136,190,0.18);
+}
+
+/* ─── KpiWidgetCard simplificado ─────────────────────────────────────────────── */
+.kw-body-simple {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+
+.kw-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kw-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  transition: background 0.12s;
+}
+.kw-toggle-row:hover { background: #f5f3ee; }
+
+.kw-toggle-label {
+  font-size: 12px;
+  color: #4b5280;
+  font-weight: 500;
+}
+.kw-toggle-row.on .kw-toggle-label { color: #363f76; }
+
+.kw-pill {
+  width: 30px;
+  height: 16px;
+  border-radius: 8px;
+  background: #d5dae8;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.18s;
+}
+.kw-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  transition: left 0.18s;
+}
+.kw-pill.on {
+  background: #9519ff;
+}
+.kw-pill.on::after { left: 16px; }
+
+.kw-add-desc {
+  font-size: 11px;
+  color: #a8aec8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  font-family: inherit;
+  text-align: left;
+  transition: color 0.12s;
+}
+.kw-add-desc:hover { color: #9519ff; }

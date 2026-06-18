@@ -13,13 +13,18 @@ export default function App() {
   const [showGrid, setShowGrid]         = useState(true)
   const [groupBySection, setGroupBySection] = useState(true)
   const [editingKpiId, setEditingKpiId]             = useState(null)
+  const [editingCardSize, setEditingCardSize]        = useState(null)
   const [groupReorderSignal, setGroupReorderSignal] = useState(null)
   const [canvasOrder, setCanvasOrder]               = useState(null)
   const [previewMode, setPreviewMode]               = useState(false)
   const [kpiVizTypes, setKpiVizTypes]               = useState({})
+  const [kpiConfigs, setKpiConfigs]                 = useState({})
 
   const handleVizTypeChange = (kpiId, type) =>
     setKpiVizTypes(prev => ({ ...prev, [kpiId]: type }))
+
+  const handleConfigChange = (id, cfg) =>
+    setKpiConfigs(prev => ({ ...prev, [id]: cfg }))
 
   return (
     <div className="app">
@@ -48,6 +53,9 @@ export default function App() {
               }
               kpiVizTypes={kpiVizTypes}
               onVizTypeChange={handleVizTypeChange}
+              kpiConfigs={kpiConfigs}
+              onConfigChange={handleConfigChange}
+              editingCardSize={editingCardSize}
             />
           )}
           <button
@@ -62,11 +70,12 @@ export default function App() {
             selectedIds={kpiSelectedIds}
             showGrid={showGrid}
             groupBySection={groupBySection}
-            onCardSelect={setEditingKpiId}
+            onCardSelect={(kpiId, size) => { setEditingKpiId(kpiId); setEditingCardSize(size ?? null) }}
             groupReorderSignal={groupReorderSignal}
             onCardsOrderChange={o => setCanvasOrder({ ...o, ts: Date.now() })}
             previewMode={previewMode}
             kpiVizTypes={kpiVizTypes}
+            kpiConfigs={kpiConfigs}
           />
         </div>
       </div>

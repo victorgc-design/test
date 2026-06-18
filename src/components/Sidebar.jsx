@@ -406,12 +406,33 @@ const VIZ_TYPES = [
       </svg>
     ),
   },
+  {
+    id: 'area', label: 'Area', minSize: 'L',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4,44 C14,30 22,12 30,18 S44,6 54,10 S66,2 76,6" stroke="#9519ff" strokeWidth="2" strokeLinecap="round"/>
+        <path d="M4,44 C14,30 22,12 30,18 S44,6 54,10 S66,2 76,6 L76,50 L4,50 Z" fill="rgba(149,25,255,0.12)"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'geo', label: 'Map', minSize: 'L',
+    Thumb: () => (
+      <svg viewBox="0 0 80 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="72" height="47" rx="4" fill="#ede9e1"/>
+        <ellipse cx="40" cy="27" rx="18" ry="14" fill="#ddd8cf"/>
+        <ellipse cx="40" cy="27" rx="10" ry="8" fill="#c9c4bb"/>
+        <circle cx="40" cy="27" r="3" fill="#9519ff"/>
+      </svg>
+    ),
+  },
 ]
 
-function VizTypeGallery({ current, onSelect }) {
+function VizTypeGallery({ current, onSelect, cardSize = null }) {
+  const visible = VIZ_TYPES.filter(t => !t.minSize || cardSize === 'L' || cardSize === 'XL')
   return (
     <div className="vtz-gallery">
-      {VIZ_TYPES.map(({ id, label, Thumb }) => (
+      {visible.map(({ id, label, Thumb }) => (
         <button
           key={id}
           className={`vtz-thumb${current === id ? ' active' : ''}`}
@@ -428,28 +449,21 @@ function VizTypeGallery({ current, onSelect }) {
 
 // ── KPI WIDGET CARD ───────────────────────────────────────────────────────────
 
-function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandleProps = {}, isDraggingCard = false, dragStyle = {}, vizType = 'kpi', onVizTypeChange, externalExpanded = false }) {
-  const [expanded, setExpanded] = useState(false)
-  const [subOpen, setSubOpen]   = useState({ format: true, info: false, sizing: false })
+function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandleProps = {}, isDraggingCard = false, dragStyle = {}, vizType = 'kpi', onVizTypeChange, externalExpanded = false, cardSize = null }) {
+  const [expanded, setExpanded]     = useState(false)
+  const [showTooltip, setShowTooltip] = useState(false)
 
   useEffect(() => {
     if (externalExpanded) setExpanded(true)
   }, [externalExpanded])
-  const [kpiSize, setKpiSize]   = useState('S')
 
-  const togSub = (k) => setSubOpen(p => ({ ...p, [k]: !p[k] }))
   const set = (k) => (v) => onChange({ ...config, [k]: v })
   const KpiIcon = kpi.icon
 
   return (
     <div className={`kpi-viz-item${expanded ? ' open' : ''}${isDraggingCard ? ' dragging' : ''}`} style={dragStyle}>
-      {/* Header */}
       <div className="kpi-widget-header" onClick={() => setExpanded(v => !v)}>
-        <div
-          className="kpi-widget-grip"
-          onPointerDown={e => e.stopPropagation()}
-          {...dragHandleProps}
-        >
+        <div className="kpi-widget-grip" onPointerDown={e => e.stopPropagation()} {...dragHandleProps}>
           <GripVertical size={13} style={{ color: '#c4c9e0', flexShrink: 0, cursor: 'grab' }} />
         </div>
         <div className="kpi-widget-icon-circle">
@@ -464,171 +478,46 @@ function KpiWidgetCard({ kpi, config, onChange, onRemove, onReset, dragHandlePro
       </div>
 
       {expanded && (
-        <>
-          {/* Widget Content Format */}
-          <div className="kpi-sub-accordion">
-            <div className="kpi-sub-header" onClick={() => togSub('format')}>
-              <span>Widget Content Format</span>
-              {subOpen.format ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            </div>
-            {subOpen.format && (
-              <div className="kpi-sub-body">
-                <div className="kpi-sub-field">
-                  <span className="kpi-sub-field-label">Display Mode</span>
-                  <VizTypeGallery
-                    current={vizType}
-                    onSelect={type => onVizTypeChange?.(kpi.id, type)}
-                  />
-                </div>
-                <div className="kpi-sub-field">
-                  <span className="kpi-sub-field-label">Detail View</span>
-                  <div className="granularity-tabs tertiary">
-                    {['Fixed','Expandable','Overlay'].map(m => (
-                      <button
-                        key={m}
-                        className={`gran-tab${config.detailView === m.toLowerCase() ? ' active' : ''}`}
-                        onClick={() => set('detailView')(m.toLowerCase())}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+        <div className="kw-body-simple">
+          <VizTypeGallery
+            current={vizType}
+            onSelect={type => onVizTypeChange?.(kpi.id, type)}
+            cardSize={cardSize}
+          />
+
+          <div className="kw-toggles">
+            <button className={`kw-toggle-row${config.showKpiIcon ? ' on' : ''}`} onClick={() => set('showKpiIcon')(!config.showKpiIcon)}>
+              <span className="kw-toggle-label">Show icon</span>
+              <span className={`kw-pill${config.showKpiIcon ? ' on' : ''}`} />
+            </button>
+            <button className={`kw-toggle-row${config.visualProgressBar ? ' on' : ''}`} onClick={() => set('visualProgressBar')(!config.visualProgressBar)}>
+              <span className="kw-toggle-label">Progress bar</span>
+              <span className={`kw-pill${config.visualProgressBar ? ' on' : ''}`} />
+            </button>
+            <button className={`kw-toggle-row${config.vsPreviousPeriod ? ' on' : ''}`} onClick={() => set('vsPreviousPeriod')(!config.vsPreviousPeriod)}>
+              <span className="kw-toggle-label">vs. Period</span>
+              <span className={`kw-pill${config.vsPreviousPeriod ? ' on' : ''}`} />
+            </button>
           </div>
 
-          {/* Additional Information */}
-          <div className="kpi-sub-accordion">
-            <div className="kpi-sub-header" onClick={() => togSub('info')}>
-              <span>Additional Information</span>
-              {subOpen.info ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            </div>
-            {subOpen.info && (
-              <div className="kpi-sub-body">
-                <div className="kpi-sub-field">
-                  <label className="kpi-sub-field-label">Tooltip</label>
-                  <textarea
-                    className="kpi-tooltip-input"
-                    placeholder="Here's a quick tip! Hover over the info icon next to this KPI to see what it means."
-                    value={config.tooltip}
-                    onChange={e => set('tooltip')(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <div className="form-toggle-row">
-                  <span>Show KPI Icon</span>
-                  <button className={`viz-toggle${config.showKpiIcon ? ' on' : ''}`} onClick={() => set('showKpiIcon')(!config.showKpiIcon)} />
-                </div>
-                <div className="form-toggle-row">
-                  <span>
-                    Visual Progress Bar
-                    <br /><small className="kpi-sub-hint">(out of 100%)</small>
-                  </span>
-                  <button className={`viz-toggle${config.visualProgressBar ? ' on' : ''}`} onClick={() => set('visualProgressBar')(!config.visualProgressBar)} />
-                </div>
-                <div className="form-toggle-row">
-                  <span>
-                    'From Which' Split
-                    <br /><small className="kpi-sub-hint">(Up to 3 KPIs)</small>
-                  </span>
-                  <button className={`viz-toggle${config.fromWhichSplit ? ' on' : ''}`} onClick={() => set('fromWhichSplit')(!config.fromWhichSplit)} />
-                </div>
-                <div className="form-toggle-row">
-                  <span>Vs. previous Period</span>
-                  <button className={`viz-toggle${config.vsPreviousPeriod ? ' on' : ''}`} onClick={() => set('vsPreviousPeriod')(!config.vsPreviousPeriod)} />
-                </div>
-                {config.vsPreviousPeriod && (
-                  <>
-                    <div className="granularity-tabs tertiary">
-                      <button
-                        className={`gran-tab${config.vsTimeMode === 'set-time-frame' ? ' active' : ''}`}
-                        onClick={() => set('vsTimeMode')('set-time-frame')}
-                      >
-                        Set Time Frame
-                      </button>
-                      <button
-                        className={`gran-tab${config.vsTimeMode === 'custom-dates' ? ' active' : ''}`}
-                        onClick={() => set('vsTimeMode')('custom-dates')}
-                      >
-                        Custom Dates
-                      </button>
-                    </div>
-                    {config.vsTimeMode === 'custom-dates' && (
-                      <div className="custom-dates-row">
-                        <div className="form-field" style={{ flex: 1 }}>
-                          <label className="form-label">Start Date</label>
-                          <div className="date-input-wrap">
-                            <CalendarRange size={12} style={{ color: '#797fa4', flexShrink: 0 }} />
-                            <input className="form-input-bare" placeholder="Pick a date" value={config.vsStartDate} onChange={e => set('vsStartDate')(e.target.value)} />
-                          </div>
-                        </div>
-                        <div className="form-field" style={{ flex: 1 }}>
-                          <label className="form-label">End Date</label>
-                          <div className="date-input-wrap">
-                            <CalendarRange size={12} style={{ color: '#797fa4', flexShrink: 0 }} />
-                            <input className="form-input-bare" placeholder="Pick a date" value={config.vsEndDate} onChange={e => set('vsEndDate')(e.target.value)} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          {!showTooltip
+            ? <button className="kw-add-desc" onClick={() => setShowTooltip(true)}>+ Add description</button>
+            : <textarea
+                className="kpi-tooltip-input"
+                placeholder="Add a tooltip for this KPI…"
+                value={config.tooltip}
+                onChange={e => set('tooltip')(e.target.value)}
+                rows={2}
+                autoFocus
+              />
+          }
 
-          {/* Widget Sizing */}
-          <div className="kpi-sub-accordion">
-            <div className="kpi-sub-header" onClick={() => togSub('sizing')}>
-              <span>Widget Sizing</span>
-              {subOpen.sizing ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-            </div>
-            {subOpen.sizing && (
-              <div className="kpi-sub-body">
-                <div className="kpi-sub-field">
-                  <span className="kpi-sub-field-label">Widget Size</span>
-                  <div className="viz-size-row" style={{ paddingBottom: 0 }}>
-                    {SIZE_OPTIONS.map(s => (
-                      <button
-                        key={s}
-                        className={`viz-size-btn${kpiSize === s ? ' active' : ''}`}
-                        onClick={() => setKpiSize(s)}
-                      >{s}</button>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-toggle-row" style={{ alignItems: 'flex-start', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#363f76' }}>Stretch to Fill Width</div>
-                    <div className="kpi-sub-hint">Just stretch this widget to take up the whole row</div>
-                  </div>
-                  <button className={`viz-toggle${config.stretchWidth ? ' on' : ''}`} style={{ marginTop: 2, flexShrink: 0 }} onClick={() => set('stretchWidth')(!config.stretchWidth)} />
-                </div>
-                <div className="form-toggle-row" style={{ alignItems: 'flex-start', gap: 10 }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: '#363f76' }}>Stretch to Fill Height</div>
-                    <div className="kpi-sub-hint">Just pull this widget to fill the entire column</div>
-                  </div>
-                  <button className={`viz-toggle${config.stretchHeight ? ' on' : ''}`} style={{ marginTop: 2, flexShrink: 0 }} onClick={() => set('stretchHeight')(!config.stretchHeight)} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
           <div className="widget-actions">
-            <button className="widget-action-trash" onClick={onRemove} title="Remove KPI">
-              <Trash2 size={13} />
-            </button>
-            <button className="widget-action-reset" onClick={onReset}>
-              <RotateCcw size={11} />Reset
-            </button>
-            <button className="widget-action-save">
-              <Check size={11} />Save Widget
-            </button>
+            <button className="widget-action-trash" onClick={onRemove} title="Remove KPI"><Trash2 size={13} /></button>
+            <button className="widget-action-reset" onClick={onReset}><RotateCcw size={11} />Reset</button>
+            <button className="widget-action-save"><Check size={11} />Save Widget</button>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
@@ -696,7 +585,7 @@ function DataKpisContent({ selectedIds, onToggle, editingId }) {
 }
 
 // ── Wrapper sortable para KpiWidgetCard (con tipo 'kpi' en data) ──────────────
-function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset, groupId, vizType, onVizTypeChange, externalExpanded }) {
+function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset, groupId, vizType, onVizTypeChange, externalExpanded, cardSize }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: kpi.id,
     data: { type: 'kpi', groupId },
@@ -714,6 +603,7 @@ function SortableKpiWidgetCard({ kpi, config, onChange, onRemove, onReset, group
         vizType={vizType}
         onVizTypeChange={onVizTypeChange}
         externalExpanded={externalExpanded}
+        cardSize={cardSize}
       />
     </div>
   )
@@ -760,7 +650,7 @@ function SortableGroupCard({ group, open, onToggle, kpiCount, children }) {
 
 const SIZE_OPTIONS = ['S', 'M', 'L', 'XL']
 
-function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, onReset, groupBySection, onGroupBySectionToggle, onReorderGroup, onGroupsReorder, canvasOrder, editingKpiId, kpiVizTypes, onVizTypeChange }) {
+function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, onReset, groupBySection, onGroupBySectionToggle, onReorderGroup, onGroupsReorder, canvasOrder, editingKpiId, kpiVizTypes, onVizTypeChange, editingCardSize }) {
   const [groupExpanded, setGroupExpanded]         = useState({})
   const [groupOrders, setGroupOrders]             = useState({})
   const [groupDisplayOrder, setGroupDisplayOrder] = useState([])
@@ -918,6 +808,7 @@ function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, on
                           vizType={kpiVizTypes?.[kpi.id] ?? 'kpi'}
                           onVizTypeChange={onVizTypeChange}
                           externalExpanded={expandedKpiId === kpi.id}
+                          cardSize={expandedKpiId === kpi.id ? editingCardSize : null}
                         />
                       ))}
                     </div>
@@ -934,14 +825,15 @@ function VizSettingsContent({ selectedIds, configs, onConfigChange, onRemove, on
 
 // ── SIDEBAR ───────────────────────────────────────────────────────────────────
 
-export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingKpiId, onGroupReorder, onGroupsReorder, canvasOrder, kpiVizTypes, onVizTypeChange }) {
+export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingKpiId, onGroupReorder, onGroupsReorder, canvasOrder, kpiVizTypes, onVizTypeChange, kpiConfigs = {}, onConfigChange, editingCardSize }) {
   const [open, setOpen]           = useState({})
   const [datasets, setDatasets]   = useState(EXAMPLE_DATASETS)
   const [showForm, setShowForm]   = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [selectedIds, setSelectedIds]   = useState([])
-  const [configs, setConfigs]           = useState({})
   const [groupBySection, setGroupBySection] = useState(true)
+
+  const configs = kpiConfigs
 
   useEffect(() => { onKpisChange?.(selectedIds) }, [selectedIds])
   useEffect(() => { onGroupBySectionChange?.(groupBySection) }, [groupBySection])
@@ -959,13 +851,13 @@ export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingK
   const toggleKpi = (kpi) => {
     setSelectedIds(prev => {
       if (prev.includes(kpi.id)) return prev.filter(id => id !== kpi.id)
-      if (!configs[kpi.id]) setConfigs(c => ({ ...c, [kpi.id]: { ...DEFAULT_WIDGET } }))
+      if (!kpiConfigs[kpi.id]) onConfigChange?.(kpi.id, { ...DEFAULT_WIDGET })
       return [...prev, kpi.id]
     })
   }
   const removeKpi    = (id)      => setSelectedIds(prev => prev.filter(x => x !== id))
-  const updateCfg    = (id, cfg) => setConfigs(p => ({ ...p, [id]: cfg }))
-  const resetCfg     = (id)      => setConfigs(p => ({ ...p, [id]: { ...DEFAULT_WIDGET } }))
+  const updateCfg    = (id, cfg) => onConfigChange?.(id, cfg)
+  const resetCfg     = (id)      => onConfigChange?.(id, { ...DEFAULT_WIDGET })
 
   const accordionSections = [
     { id: 'periods', label: 'Periods & Campaigns', badge: String(datasets.length),                   icon: Unplug },
@@ -1049,6 +941,7 @@ export default function Sidebar({ onKpisChange, onGroupBySectionChange, editingK
                   editingKpiId={editingKpiId}
                   kpiVizTypes={kpiVizTypes}
                   onVizTypeChange={onVizTypeChange}
+                  editingCardSize={editingCardSize}
                 />
               )}
             </div>
